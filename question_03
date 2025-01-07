@@ -1,0 +1,26 @@
+class Calculadora {
+    protected operando1: number
+    protected operando2: number
+
+    constructor(operando1: number, operando2: number) {
+        this.operando1 = operando1
+        this.operando2 = operando2
+    }
+
+    soma(): number {
+        return this.operando1 + this.operando2
+    }
+}
+
+class CalculadoraCientifica extends Calculadora {
+    exponenciar(): number {
+        return Math.pow(this.operando1, this.operando2)
+    }
+}
+
+
+const calc = new Calculadora(10, 5)
+console.log(`A soma dos operandos é: ${calc.soma()}`)
+
+const calcCientifica = new CalculadoraCientifica(2, 3)
+console.log(`A exponenciação dos operandos é: ${calcCientifica.exponenciar()}`)
