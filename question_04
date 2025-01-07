@@ -1,0 +1,84 @@
+import * as fs from 'fs'
+
+class Conta {
+    constructor(public numero: string, public saldo: number) {}
+    depositar(valor: number): void { this.saldo += valor; }
+    sacar(valor: number): void { this.saldo -= valor; }
+}
+
+class Poupanca extends Conta {
+    constructor(numero: string, saldo: number, public taxaJuros: number) {
+        super(numero, saldo)
+    }
+    renderJuros(): void {
+        this.saldo += this.saldo * this.taxaJuros
+    }
+}
+
+class ContaImposto extends Conta {
+    constructor(numero: string, saldo: number, public taxaDesconto: number) {
+        super(numero, saldo)
+    }
+    descontarImposto(): void {
+        this.saldo -= this.saldo * this.taxaDesconto
+    }
+}
+
+class Banco {
+    private contas: Conta[] = []
+
+    adicionarConta(conta: Conta): void {
+        this.contas.push(conta)
+    }
+    
+    renderJuros(numero: string): void {
+        const conta = this.contas.find(c => c.numero === numero);
+        if (conta instanceof Poupanca) {
+            conta.renderJuros()
+        }
+    }
+
+    salvarContasArquivo(): void {
+        const data = this.contas.map(c => {
+            if (c instanceof Poupanca) {
+                return `${c.numero}; ${c.saldo}; CP; ${c.taxaJuros}
+            } else if (c instanceof ContaImposto) {
+                return `${c.numero}; ${c.saldo}; CI; ${c.taxaDesconto}`
+            } else {
+                return `${c.numero}; ${c.saldo}; C`
+            }
+        }).join('\n')
+        fs.writeFileSync('contas.txt', data)
+    }
+
+    carregarContasArquivo(): void {
+        if (fs.existsSync('contas.txt')) {
+            const data = fs.readFileSync('contas.txt', 'utf-8')
+            const linhas = data.split('\n')
+            this.contas = linhas.map(linha => {
+                const [numero, saldo, tipo, taxa] = linha.split(';').map(s => s.trim())
+                if (tipo === 'CP') {
+                    return new Poupanca(numero, parseFloat(saldo), parseFloat(taxa))
+                } else if (tipo === 'CI') {
+                    return new ContaImposto(numero, parseFloat(saldo), parseFloat(taxa))
+                } else {
+                    return new Conta(numero, parseFloat(saldo))
+                }
+            })
+        }
+    }
+}
+
+const banco = new Banco()
+banco.carregarContasArquivo()
+
+const conta1 = new Conta("111-1", 100)
+const poupanca1 = new Poupanca("222-2", 200, 0.05)
+const contaImposto1 = new ContaImposto("333-3", 300, 0.1)
+
+banco.adicionarConta(conta1)
+banco.adicionarConta(poupanca1)
+banco.adicionarConta(contaImposto1)
+
+banco.renderJuros("222-2")
+banco.salvarContasArquivo()
