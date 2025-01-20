@@ -1,0 +1,174 @@
+class Produto {
+  private id: number
+  private descricao: string
+  private quantidade: number
+  private valorUnitario: number
+
+  constructor(id: number, descricao: string, quantidade: number, valorUnitario: number) {
+    this.id = id
+    this.descricao = descricao
+    this.quantidade = quantidade
+    this.valorUnitario = valorUnitario
+  }
+
+  
+  public getId(): number {
+    return this.id
+  }
+
+  public getDescricao(): string {
+    return this.descricao
+  }
+
+  public getQuantidade(): number {
+    return this.quantidade
+  }
+
+  public getValorUnitario(): number {
+    return this.valorUnitario
+  }
+
+  
+  public repor(quantidade: number): void {
+    this.quantidade += quantidade
+  }
+
+  public darBaixa(quantidade: number): void {
+    if (quantidade > this.quantidade) {
+      console.log("Quantidade insuficiente em estoque.")
+    } else {
+      this.quantidade -= quantidade
+    }
+  }
+}
+
+class ProdutoPerecivel extends Produto {
+  private dataValidade: Date
+
+  constructor(id: number, descricao: string, quantidade: number, valorUnitario: number, dataValidade: Date) {
+    super(id, descricao, quantidade, valorUnitario)
+    this.dataValidade = dataValidade
+  }
+
+  public estaValido(): boolean {
+    const hoje = new Date()
+    return this.dataValidade >= hoje
+  }
+
+  
+  public repor(quantidade: number): void {
+    if (this.estaValido()) {
+      super.repor(quantidade)
+    } else {
+      console.log("Produto perecível fora da validade. Não é possível repor.")
+    }
+  }
+
+  public darBaixa(quantidade: number): void {
+    if (this.estaValido()) {
+      super.darBaixa(quantidade)
+    } else {
+      console.log("Produto perecível fora da validade. Não é possível dar baixa.")
+    }
+  }
+}
+
+class Estoque {
+  private produtos: (Produto | ProdutoPerecivel)[] = []
+
+  
+  private existe(id: number, descricao: string): boolean {
+    return this.produtos.some(
+      (produto) => produto.getId() === id || produto.getDescricao() === descricao
+    )
+  }
+
+  
+  public incluir(produto: Produto | ProdutoPerecivel): void {
+    if (this.existe(produto.getId(), produto.getDescricao())) {
+      console.log("Produto com mesmo ID ou descrição já existe.")
+    } else {
+      this.produtos.push(produto);
+      console.log("Produto incluído com sucesso.")
+    }
+  }
+
+  
+  public consultar(id: number): Produto | ProdutoPerecivel | undefined {
+    return this.produtos.find((produto) => produto.getId() === id)
+  }
+
+  
+  public excluir(id: number): void {
+    const index = this.produtos.findIndex((produto) => produto.getId() === id)
+    if (index !== -1) {
+      this.produtos.splice(index, 1)
+      console.log("Produto excluído com sucesso.")
+    } else {
+      console.log("Produto não encontrado.")
+    }
+  }
+
+  public repor(id: number, quantidade: number): void {
+    const produto = this.consultar(id)
+    if (produto) {
+      if (produto instanceof ProdutoPerecivel && !produto.estaValido()) {
+        console.log("Não é possível repor produto perecível fora da validade.")
+      } else {
+        produto.repor(quantidade)
+        console.log(`Reposto ${quantidade} unidades.`)
+      }
+    } else {
+      console.log("Produto não encontrado.")
+    }
+  }
+
+  public darBaixa(id: number, quantidade: number): void {
+    const produto = this.consultar(id)
+    if (produto) {
+      if (produto instanceof ProdutoPerecivel && !produto.estaValido()) {
+        console.log("Não é possível dar baixa em produto perecível fora da validade.")
+      } else {
+        produto.darBaixa(quantidade)
+        console.log(`Dada baixa de ${quantidade} unidades.`)
+      }
+    } else {
+      console.log("Produto não encontrado.")
+    }
+  }
+
+  public listarPereciveisVencidos(): void {
+    const produtosVencidos = this.produtos.filter(
+      (produto) => produto instanceof ProdutoPerecivel && !produto.estaValido()
+    )
+    console.log("Produtos perecíveis vencidos:")
+    produtosVencidos.forEach((produto) => {
+      console.log(`ID: ${produto.getId()} - Descrição: ${produto.getDescricao()} - Data de validade: ${produto['dataValidade']}`)
+    })
+  }
+}
+
+const produto1 = new Produto(1, "Produto 1", 50, 10.0);
+const produtoPerecivel1 = new ProdutoPerecivel(2, "Produto Perecível 1", 20, 5.0, new Date('2025-12-31'))
+const produtoPerecivel2 = new ProdutoPerecivel(3, "Produto Perecível 2", 30, 6.0, new Date('2023-01-01'))
+
+const estoque = new Estoque()
+
+
+estoque.incluir(produto1);
+estoque.incluir(produtoPerecivel1)
+estoque.incluir(produtoPerecivel2)
+
+
+estoque.consultar(1)
+estoque.consultar(2)
+estoque.consultar(3)
+
+
+estoque.repor(1, 10)
+estoque.darBaixa(1, 5)
+
+estoque.repor(3, 10)
+estoque.darBaixa(3, 5)
+
+estoque.listarPereciveisVencidos()
